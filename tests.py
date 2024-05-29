@@ -1,7 +1,10 @@
 import os
 import glob
+import json
+import base64
 import smtplib
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 
 def send_notification(email, txt):
@@ -12,22 +15,43 @@ def send_notification(email, txt):
 
     for to_item in email:
         msg = 'From: %s\r\nTo: %s\r\nContent-Type: text/html; charset="utf-8"\r\nSubject: %s\r\n\r\n' % (
-            sender, to_item, f'[TEST REPORT {current_time}]')
+            sender, to_item, f'TEST REPORT {current_time}')
         msg += txt
         mail_lib.sendmail(sender, to_item, msg.encode('utf8'))
     mail_lib.quit()
 
 def create_message(message):
     half_name = 'newman'
-    files = glob.glob(os.path.join(report_path, f'*{half_name}*'))  # file name
-    latest_file = max(files, key=os.path.getctime)  # fresh file
-    report_file = open(latest_file, 'r', encoding='utf-8')
+    html_file = glob.glob(os.path.join(report_path, f'*{half_name}*.html'))  # html file name
+    latest_html_file = max(html_file, key=os.path.getctime)  # fresh html file
+    report_file = open(latest_html_file, 'r', encoding='utf-8')
     html = report_file.read()
+    json_file = glob.glob(os.path.join(report_path, f'*{half_name}*.json'))  # json file name
+    latest_json_file = max(json_file, key=os.path.getctime)  # fresh json file
+
+    # Parsing json and create chart
+    with open(latest_json_file, 'r') as file:
+        data = json.load(file)
+    total = data["run"]["stats"]["assertions"]["total"]
+    failed = data["run"]["stats"]["assertions"]["failed"]
+    labels = ["total", "failed"]
+    values = [total, failed]
+    colors = ['#60c464', '#ff7575']
+    plt.bar(labels, values, color=colors)
+    plt.xlabel("Assertions", fontsize=10, fontweight='bold')
+    plt.ylabel("Count", fontsize=10, fontweight='bold')
+    plt.title(f"Test results\n Total tests: {total}, Failed tests: {failed}")
+    plt.savefig('C:/Users/URIST/result_chart.png')
+
+    # Read attachment file
+    with open('C:/Users/URIST/result_chart.png', 'rb') as file:
+        attachment_data = file.read()
+    message += "<img src='data:image/png;base64," + base64.b64encode(attachment_data).decode('utf-8') + "'>"
     message += html
     return message
 
 # Path to Postman collection/environment
-postman_collection = "C:/Users/URIST/est_collection.postman_collection.json"
+postman_collection = "C:/Users/URIST/tests.postman_collection.json"
 postman_environment = "C:/Users/URIST/dev_stand_ml.postman_environment.json"
 
 # Path to save report
@@ -37,7 +61,8 @@ report_path = "C:\\Users\\URIST"
 current_time = datetime.now().strftime("%d.%m.%Y %H:%M")
 
 # Command text
-cmd = f"newman run {postman_collection} -e {postman_environment} -r cli,html --reporter-html-export {report_path} --delay-request 4000"
+cmd = f"newman run {postman_collection} -e {postman_environment} -r cli,html,json --reporter-html-export " \
+      f"{report_path} --reporter-json-export {report_path} --delay-request 4000"
 
 process = os.system(cmd)
 
@@ -54,7 +79,7 @@ if process == 0:
         </style>
     </head>
     <body>
-        <p class="bold-green-text">Collection was completed. All tests passed successfully!</p>
+        <p class="bold-green-text">Collections run completed. All tests passed successfully!</p>
     </body>
     </html>
     """
@@ -73,7 +98,7 @@ else:
             </style>
         </head>
         <body>
-            <p class="bold-red-text">Collection was completed. An error occurred while executing tests.</p>
+            <p class="bold-red-text">Collections run completed. An error occurred while executing tests.</p>
         </body>
         </html>
         """
