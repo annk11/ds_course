@@ -37,7 +37,7 @@ def create_message(message):
     labels = ["total", "failed"]
     values = [total, failed]
     colors = ['#60c464', '#ff7575']
-    plt.bar(labels, values, color=colors)
+    plt.bar(labels, values, color=colors, alpha=0.6)
     plt.xlabel("Assertions", fontsize=10, fontweight='bold')
     plt.ylabel("Count", fontsize=10, fontweight='bold')
     plt.title(f"Test results\n Total tests: {total}, Failed tests: {failed}")
@@ -45,10 +45,10 @@ def create_message(message):
 
     # Read attachment file
     with open('C:/Users/URIST/result_chart.png', 'rb') as file:
-        attachment_data = file.read()
+        attachment_file = file.read()
 
     # Message generation
-    message += "<img src='data:image/png;base64," + base64.b64encode(attachment_data).decode('utf-8') + "'>"
+    message += "<img src='data:image/png;base64," + base64.b64encode(attachment_file).decode('utf-8') + "'>"
     message += html
     return message
 
@@ -57,7 +57,7 @@ postman_collection = "C:/Users/URIST/ests.postman_collection.json"
 postman_environment = "C:/Users/URIST/dev_stand_ml.postman_environment.json"
 
 # Path to save report
-report_path = "C:\\Users\\URIST"
+report_path = "C:/Users/URIST"
 
 # Current date for headline
 current_time = datetime.now().strftime("%d.%m.%Y %H:%M")
