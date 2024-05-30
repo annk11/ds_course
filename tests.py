@@ -10,15 +10,15 @@ import matplotlib.pyplot as plt
 def send_notification(email, txt):
     sender = 'ao.korta@yandex.ru'
     sender_password = 'Kkorta1994!'
-    mail_lib = smtplib.SMTP_SSL('smtp.yandex.ru', 465)
-    mail_lib.login(sender, sender_password)
+    mail_server = smtplib.SMTP_SSL('smtp.yandex.ru', 465)
+    mail_server.login(sender, sender_password)
 
     for to_item in email:
         msg = 'From: %s\r\nTo: %s\r\nContent-Type: text/html; charset="utf-8"\r\nSubject: %s\r\n\r\n' % (
             sender, to_item, f'TEST REPORT {current_time}')
         msg += txt
-        mail_lib.sendmail(sender, to_item, msg.encode('utf8'))
-    mail_lib.quit()
+        mail_server.sendmail(sender, to_item, msg.encode('utf8'))
+    mail_server.quit()
 
 def create_message(message):
     half_name = 'newman'
@@ -46,12 +46,14 @@ def create_message(message):
     # Read attachment file
     with open('C:/Users/URIST/result_chart.png', 'rb') as file:
         attachment_data = file.read()
+
+    # Message generation
     message += "<img src='data:image/png;base64," + base64.b64encode(attachment_data).decode('utf-8') + "'>"
     message += html
     return message
 
 # Path to Postman collection/environment
-postman_collection = "C:/Users/URIST/tests.postman_collection.json"
+postman_collection = "C:/Users/URIST/ests.postman_collection.json"
 postman_environment = "C:/Users/URIST/dev_stand_ml.postman_environment.json"
 
 # Path to save report
